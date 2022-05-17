@@ -1,0 +1,3 @@
+[submodule "f-of-e-tools"]
+	path = f-of-e-tools
+	url = git@github.com:antroseco/f-of-e-tools.git
