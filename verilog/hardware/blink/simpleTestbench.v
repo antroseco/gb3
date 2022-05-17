@@ -1,9 +1,10 @@
 `timescale 1ns/1ns
 
 module simpleTestbench;
-	reg	signalIn, signalOut;
+	reg	signalIn;
+	wire	signalOut;
 
-	simple simpleInstance(.inSignal(signalIn), .outSignal(singnalOut));
+	simple simpleInstance(.inSignal(signalIn), .outSignal(signalOut));
 
 	initial begin
 	/*
