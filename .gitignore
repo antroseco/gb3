@@ -56,3 +56,9 @@ dkms.conf
 *.bin
 *.blif
 *.json
+*.i
+*.sr
+
+# Compiled programs
+softwareblink
+softwareblink-sf
