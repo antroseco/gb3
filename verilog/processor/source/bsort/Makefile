@@ -4,8 +4,8 @@ include $(TREEROOT)/tools/sunflower/conf/setup.conf
 TARGET-ARCH	= riscv32-elf
 TARGET		= riscv
 
-PROGRAM		= softwareblink
-PROGRAM-SF	= softwareblink-sf
+PROGRAM		= bsort
+PROGRAM-SF	= bsort-sf
 INIT		= init
 INIT-SF		= init-sf
 
@@ -51,9 +51,8 @@ $(PROGRAM-SF).sr:$(PROGRAM-SF)
 
 install: all
 	$(SREC2HEX) -b 4096 $(PROGRAM).sr
-	mkdir -p ../../programs
-	cp program.hex ../../programs/.
-	cp data.hex ../../programs/.
+	cp program.hex ../../programs
+	cp data.hex ../../programs
 
 clean:
 	$(RM) init.i *.o $(PROGRAM) $(PROGRAM).sr $(PROGRAM).map
