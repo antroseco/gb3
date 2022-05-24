@@ -1,7 +1,22 @@
-#include "matrix-mul.h"
 #include <stdio.h>
 
+/*#define DEBUG*/
+
 volatile unsigned int *		gDebugLedsMemoryMappedRegister = (unsigned int *)0x2000;
+
+void matrix_mul(int* matrix_a, int* matrix_b, int *out, int n, int m, int p) {
+	/*(n x m) * (m x p)*/
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < p; j++) {
+			// note that there actually isn't a neater way to do this because
+			// you can't pass int foo[][] into a function in C lol
+			*(out+n*i+j) = 0;
+			for (int k = 0; k < m; k++) {
+				*(out+n*i+j)  += *(matrix_a+n*i+k) * *(matrix_b+k*m+j);
+			}
+		}
+	}
+}
 
 int main(void)
 {
@@ -18,41 +33,26 @@ int main(void)
 		{5, 3, 7, 9},
 	};
 	int out[4][4];
-	/*matrix_mul(matrix_a, matrix_b, &out, 4, 4, 4);*/
-	int n = 4;
-	int m = 4;
-	int p = 4;
 
+#ifndef DEBUG
 	*gDebugLedsMemoryMappedRegister = 0xFF;
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < p; j++) {
-			out[i][j] = 0;
-			for (int k = 0; k < m; k++) {
-				out[i][j] += matrix_a[i][k] * matrix_b[k][j];
-			}
-		}
-	}
+#endif /* ifndef  */
+
+	matrix_mul((int*)matrix_a, (int*)matrix_b, (int*)out, 4, 4, 4);
+
+#ifndef DEBUG
 	*gDebugLedsMemoryMappedRegister = 0x00;
-	/*for (int i = 0; i < n; i++) {*/
-		/*for (int j = 0; j < p; j++) {*/
-			/*printf("%d ", out[i][j]);*/
-		/*}*/
-		/*printf("\n");*/
-	/*}*/
+#endif /* ifndef  */
+
+#ifdef DEBUG
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			printf("%d ", out[i][j]);
+		}
+		printf("\n");
+	}
+#endif /* ifndef  */
+
 	return 0;
 }
 
-/*void matrix_mul(int** matrix_a, int** matrix_b, int*** out, int n, int m, int p) {*/
-	/*
-	 * (n x m) * (m x p)
-	 */
-	/*for (int i = 0; i < n; i++) {*/
-		/*for (int j = 0; j < p; j++) {*/
-			/*// ij*/
-			/**out[i][j] = 0;*/
-			/*for (int k = 0; k < m; k++) {*/
-				/**out[i][j] += matrix_a[i][k] * matrix_b[k][j];*/
-			/*}*/
-		/*}*/
-	/*}*/
-/*}*/
