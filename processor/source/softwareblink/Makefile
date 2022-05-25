@@ -51,9 +51,9 @@ $(PROGRAM-SF).sr:$(PROGRAM-SF)
 
 install: all
 	$(SREC2HEX) -b 4096 $(PROGRAM).sr
-	mkdir -p ../../programs
-	cp program.hex ../../programs/.
-	cp data.hex ../../programs/.
+	mkdir -p ../../programs/
+	cp program.hex ../../programs/
+	cp data.hex ../../programs/
 
 clean:
 	$(RM) init.i *.o $(PROGRAM) $(PROGRAM).sr $(PROGRAM).map
