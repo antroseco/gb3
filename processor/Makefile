@@ -2,7 +2,7 @@ DESIGN	= sail
 sail-nextpnr:
 	cp programs/data.hex verilog/
 	cp programs/program.hex verilog/
-	yosys -q ~/gb3/f-of-e-tools/yscripts/$(DESIGN).ys
+	yosys ~/gb3/f-of-e-tools/yscripts/$(DESIGN).ys
 	nextpnr-ice40 --up5k --package uwg30 --json $(DESIGN).json --pcf pcf/$(DESIGN).pcf --asc $(DESIGN).asc
 	icetime -p pcf/sail.pcf -P uwg30 -d up5k -t sail.asc
 	icepack $(DESIGN).asc $(DESIGN).bin
@@ -32,3 +32,9 @@ clean:
 
 install:
 	iceprog -S sail.bin
+
+remote-pdf:
+	ssh gb3 'cd gb3/processor/ && \
+	yosys -p "read_verilog verilog/alu.v; proc; opt; fsm; opt; show -format pdf -prefix alu -colors 33 -width -stretch"'
+	scp gb3:gb3/processor/alu.pdf .
+	ssh gb3 rm gb3/processor/alu.pdf
