@@ -47,7 +47,7 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 	input [3:0]		sign_mask;
 	output reg [31:0]	read_data;
 	output [7:0]		led;
-	output reg		clk_stall;	//Sets the clock high
+	output reg		clk_stall;	/* Sets the clock high. */
 
 	/*
 	 *	led register
@@ -106,13 +106,23 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 	reg [31:0]		data_block[0:1023];
 
 	/*
-	 *	wire assignments
+	 *	Wire assignments
 	 */
 	wire [9:0]		addr_buf_block_addr;
 	wire [1:0]		addr_buf_byte_offset;
-	
+
 	wire [31:0]		replacement_word;
 
+	/*
+	 * Split the address into word index and byte index (within the selected
+	 * word).
+	 *
+	 * BUG: The instruction memory supposedly occupies the first 0x1000
+	 * addresses (hence the data memory starts at 0x1000), but we mask off
+	 * the MSBs, so reads and writes to 0x100, 0x1100, and 0x2100 all end up
+	 * at the same memory cell. This also implies that it's impossible to
+	 * read/write to/from the instruction memory.
+	 */
 	assign			addr_buf_block_addr	= addr_buf[11:2];
 	assign			addr_buf_byte_offset	= addr_buf[1:0];
 
@@ -150,7 +160,7 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 	wire[7:0] byte_r1;
 	wire[7:0] byte_r2;
 	wire[7:0] byte_r3;
- 
+
 	assign byte_r0 = (bdec_sig0==1'b1) ? write_data_buffer[7:0] : buf0;
 	assign byte_r1 = (bdec_sig1==1'b1) ? write_data_buffer[7:0] : buf1;
 	assign byte_r2 = (bdec_sig2==1'b1) ? write_data_buffer[7:0] : buf2;
@@ -168,25 +178,25 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 	/* a is sign_mask_buf[2], b is sign_mask_buf[1], c is sign_mask_buf[0] */
 	wire write_select0;
 	wire write_select1;
-	
+
 	wire[31:0] write_out1;
 	wire[31:0] write_out2;
-	
+
 	assign write_select0 = ~sign_mask_buf[2] & sign_mask_buf[1];
 	assign write_select1 = sign_mask_buf[2];
-	
+
 	assign write_out1 = (write_select0) ? {halfword_r1, halfword_r0} : {byte_r3, byte_r2, byte_r1, byte_r0};
 	assign write_out2 = (write_select0) ? 32'b0 : write_data_buffer;
-	
+
 	assign replacement_word = (write_select1) ? write_out2 : write_out1;
 	/*
 	 *	Combinational logic for generating 32-bit read data
 	 */
-	
+
 	wire select0;
 	wire select1;
 	wire select2;
-	
+
 	wire[31:0] out1;
 	wire[31:0] out2;
 	wire[31:0] out3;
@@ -196,21 +206,21 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 	/* a is sign_mask_buf[2], b is sign_mask_buf[1], c is sign_mask_buf[0]
 	 * d is addr_buf_byte_offset[1], e is addr_buf_byte_offset[0]
 	 */
-	
+
 	assign select0 = (~sign_mask_buf[2] & ~sign_mask_buf[1] & ~addr_buf_byte_offset[1] & addr_buf_byte_offset[0]) | (~sign_mask_buf[2] & addr_buf_byte_offset[1] & addr_buf_byte_offset[0]) | (~sign_mask_buf[2] & sign_mask_buf[1] & addr_buf_byte_offset[1]); //~a~b~de + ~ade + ~abd
 	assign select1 = (~sign_mask_buf[2] & ~sign_mask_buf[1] & addr_buf_byte_offset[1]) | (sign_mask_buf[2] & sign_mask_buf[1]); // ~a~bd + ab
 	assign select2 = sign_mask_buf[1]; //b
-	
+
 	assign out1 = (select0) ? ((sign_mask_buf[3]==1'b1) ? {{24{buf1[7]}}, buf1} : {24'b0, buf1}) : ((sign_mask_buf[3]==1'b1) ? {{24{buf0[7]}}, buf0} : {24'b0, buf0});
-	assign out2 = (select0) ? ((sign_mask_buf[3]==1'b1) ? {{24{buf3[7]}}, buf3} : {24'b0, buf3}) : ((sign_mask_buf[3]==1'b1) ? {{24{buf2[7]}}, buf2} : {24'b0, buf2}); 
+	assign out2 = (select0) ? ((sign_mask_buf[3]==1'b1) ? {{24{buf3[7]}}, buf3} : {24'b0, buf3}) : ((sign_mask_buf[3]==1'b1) ? {{24{buf2[7]}}, buf2} : {24'b0, buf2});
 	assign out3 = (select0) ? ((sign_mask_buf[3]==1'b1) ? {{16{buf3[7]}}, buf3, buf2} : {16'b0, buf3, buf2}) : ((sign_mask_buf[3]==1'b1) ? {{16{buf1[7]}}, buf1, buf0} : {16'b0, buf1, buf0});
 	assign out4 = (select0) ? 32'b0 : {buf3, buf2, buf1, buf0};
-	
+
 	assign out5 = (select1) ? out2 : out1;
 	assign out6 = (select1) ? out4 : out3;
-	
+
 	assign read_buf = (select2) ? out6 : out5;
-	
+
 	/*
 	 *	This uses Yosys's support for nonzero initial values:
 	 *
@@ -246,7 +256,7 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 				write_data_buffer <= write_data;
 				addr_buf <= addr;
 				sign_mask_buf <= sign_mask;
-				
+
 				if(memwrite==1'b1 || memread==1'b1) begin
 					state <= READ_BUFFER;
 					clk_stall <= 1;
@@ -254,11 +264,7 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 			end
 
 			READ_BUFFER: begin
-				/*
-				 *	Subtract out the size of the instruction memory.
-				 *	(Bad practice: The constant should be a `define).
-				 */
-				word_buf <= data_block[addr_buf_block_addr - 32'h1000];
+				word_buf <= data_block[addr_buf_block_addr];
 				if(memread_buf==1'b1) begin
 					state <= READ;
 				end
@@ -276,11 +282,7 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 			WRITE: begin
 				clk_stall <= 0;
 
-				/*
-				 *	Subtract out the size of the instruction memory.
-				 *	(Bad practice: The constant should be a `define).
-				 */
-				data_block[addr_buf_block_addr - 32'h1000] <= replacement_word;
+				data_block[addr_buf_block_addr] <= replacement_word;
 				state <= IDLE;
 			end
 
