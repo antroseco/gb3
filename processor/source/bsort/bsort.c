@@ -35,10 +35,7 @@ main(void)
 	}
 	*gDebugLedsMemoryMappedRegister = 0x00;
 
-	for (int i = 0; i < 40000; i++) {}
-	/**gDebugLedsMemoryMappedRegister = 0xFF;*/
-
-	/*print("[%s]\n", bsort_input);*/
+	for (int i = 0; i < 200000; i++) {}
 
 	return 0;
 }
