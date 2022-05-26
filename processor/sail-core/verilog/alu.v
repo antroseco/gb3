@@ -75,7 +75,7 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable);
 		Branch_Enable = 1'b0;
 	end
 
-	always @(ALUctl, A, B) begin
+	always @* begin
 		case (ALUctl[3:0])
 			/*
 			 *	AND (the fields also match ANDI and LUI)
@@ -144,14 +144,25 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable);
 		endcase
 	end
 
+	reg unsigned_lt;
+
 	always @(ALUctl, ALUOut, A, B) begin
+		// logically:
+		// A[31]  B[31]  A < B (unsigned)
+		// 0      0      (A + ~B + 1)[31]
+		// 0      1      1
+		// 1      0      0
+		// 1      1      (A + ~B + 1)[31]
+		// Then apply a karnaugh map, though it's just a 3-LUT anyway.
+		unsigned_lt = ((~A[31] + B[31]) & ALUOut[31]) | (~A[31] & B[31]);
+
 		case (ALUctl[6:4])
 			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BEQ:	Branch_Enable = (ALUOut == 0);
 			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BNE:	Branch_Enable = !(ALUOut == 0);
-			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BLT:	Branch_Enable = ($signed(A) < $signed(B));
-			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BGE:	Branch_Enable = ($signed(A) >= $signed(B));
-			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BLTU:	Branch_Enable = ($unsigned(A) < $unsigned(B));
-			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BGEU:	Branch_Enable = ($unsigned(A) >= $unsigned(B));
+			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BLT:	Branch_Enable = ALUOut[31];
+			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BGE:	Branch_Enable = ~ALUOut[31];
+			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BLTU:	Branch_Enable = unsigned_lt;
+			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BGEU:	Branch_Enable = ~unsigned_lt;
 
 			default:					Branch_Enable = 1'b0;
 		endcase
