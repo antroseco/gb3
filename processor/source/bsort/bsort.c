@@ -14,7 +14,7 @@ main(void)
 
 	/**gDebugLedsMemoryMappedRegister = 0x00;*/
 
-	*gDebugLedsMemoryMappedRegister = 0xFF;
+	*gDebugLedsMemoryMappedRegister = 0x00;
 
 
 	/*print("\n\n[%s]\n", bsort_input);*/
@@ -33,7 +33,18 @@ main(void)
 
 		maxindex--;
 	}
-	*gDebugLedsMemoryMappedRegister = 0x00;
+	int check = 1;
+	for (int i=0; i<bsort_input_len; i++){
+		if (bsort_input[i] != correct_arr[i]){
+			check = 0;
+		}
+	}
+
+	if (check)
+	{
+		*gDebugLedsMemoryMappedRegister = 0xFF; //LED turn on
+		for (int j = 0; j < 4000; j++); //delay for an interval
+	}
 
 	for (int i = 0; i < 200000; i++) {}
 
