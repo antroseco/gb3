@@ -59,3 +59,8 @@ dkms.conf
 *.i
 *.sr
 *.fst
+
+# Stuff
+/processor/outputs/
+/processor/compilation_output
+/processor/results.txt
