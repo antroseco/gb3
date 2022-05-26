@@ -54,11 +54,15 @@ module csr_file (clk, write, wrAddr_CSR, wrVal_CSR, rdAddr_CSR, rdVal_CSR);
 
 	reg [31:0] csr_file [0:2**10-1];
 
+	/*
+	 * BUG: 12-bit addresses are used, but csr_file only takes 10-bit
+	 * addresses, so drop the 2 MSBs for now.
+	 */
 	always @(posedge clk) begin
 		if (write) begin
-			csr_file[wrAddr_CSR] <= wrVal_CSR;
+			csr_file[wrAddr_CSR[9:0]] <= wrVal_CSR;
 		end
-		rdVal_CSR <= csr_file[rdAddr_CSR];
-	end
 
+		rdVal_CSR <= csr_file[rdAddr_CSR[9:0]];
+	end
 endmodule
