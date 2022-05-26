@@ -64,3 +64,4 @@ dkms.conf
 /processor/outputs/
 /processor/compilation_output
 /processor/results.txt
+/processor/sail-core/simulation/*.vcd
