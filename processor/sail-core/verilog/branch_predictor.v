@@ -52,7 +52,7 @@ module branch_predictor(
 	);
 
 	/*
-	 *	inputs
+	 *	Inputs
 	 */
 	input		clk;
 	input		actual_branch_decision;
@@ -62,15 +62,27 @@ module branch_predictor(
 	input [31:0]	offset;
 
 	/*
-	 *	outputs
+	 *	Outputs
 	 */
 	output [31:0]	branch_addr;
 	output		prediction;
 
 	/*
-	 *	internal state
+	 *	Internal state.
+	 *
+	 *	The instruction memory can store up to 0x1000 instructions. We'd
+	 *	like to keep separate state for each instruction, but that would
+	 *	take up too much area. Hence, assume that we'll stay in the same
+	 *	function for some time and use bits 5:2 to identify 16 states
+	 *	(the 2 LSBs are always 0 because instructions are word-aligned).
+	 *	The 6 MSBs could be stored and verified, but that is probably
+	 *	not worth the effort---we would still need to make a random
+	 *	prediction, so might as well use the pre-existing state.
 	 */
-	reg [1:0]	s;
+	reg [1:0]	state[15:0];
+	reg [3:0]	last_tag;
+	wire [3:0]	tag;
+	wire [1:0]	s;
 
 	reg		branch_mem_sig_reg;
 
@@ -84,8 +96,11 @@ module branch_predictor(
 	 *	the design should instead use a reset signal going to
 	 *	modules in the design and to thereby set the values.
 	 */
+	integer i;
 	initial begin
-		s = 2'b00;
+		for (i = 0; i < 16; i = i + 1)
+			state[i] = 2'b01;
+
 		branch_mem_sig_reg = 1'b0;
 	end
 
@@ -100,11 +115,52 @@ module branch_predictor(
 	 */
 	always @(posedge clk) begin
 		if (branch_mem_sig_reg) begin
-			s[1] <= (s[1]&s[0]) | (s[0]&actual_branch_decision) | (s[1]&actual_branch_decision);
-			s[0] <= (s[1]&(!s[0])) | ((!s[0])&actual_branch_decision) | (s[1]&actual_branch_decision);
+			state[last_tag] <= {
+				(s[1]&s[0]) | (s[0]&actual_branch_decision) | (s[1]&actual_branch_decision),
+				(s[1]&(!s[0])) | ((!s[0])&actual_branch_decision) | (s[1]&actual_branch_decision)
+			};
 		end
+
+		if (branch_decode_sig)
+			last_tag <= tag;
 	end
 
+	assign tag = in_addr[5:2];
+	assign s = state[tag];
 	assign branch_addr = in_addr + offset;
 	assign prediction = s[1] & branch_decode_sig;
+
+	wire [1:0] s0;
+	wire [1:0] s1;
+	wire [1:0] s2;
+	wire [1:0] s3;
+	wire [1:0] s4;
+	wire [1:0] s5;
+	wire [1:0] s6;
+	wire [1:0] s7;
+	wire [1:0] s8;
+	wire [1:0] s9;
+	wire [1:0] s10;
+	wire [1:0] s11;
+	wire [1:0] s12;
+	wire [1:0] s13;
+	wire [1:0] s14;
+	wire [1:0] s15;
+
+	assign s0 = state[0];
+	assign s1 = state[1];
+	assign s2 = state[2];
+	assign s3 = state[3];
+	assign s4 = state[4];
+	assign s5 = state[5];
+	assign s6 = state[6];
+	assign s7 = state[7];
+	assign s8 = state[8];
+	assign s9 = state[9];
+	assign s10 = state[10];
+	assign s11 = state[11];
+	assign s12 = state[12];
+	assign s13 = state[13];
+	assign s14 = state[14];
+	assign s15 = state[15];
 endmodule
