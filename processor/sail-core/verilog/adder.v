@@ -52,3 +52,12 @@ module adder(input1, input2, out);
 
 	assign		out = input1 + input2;
 endmodule
+
+module full_adder(carry_in, input1, input2, out);
+	input		carry_in;
+	input [31:0]	input1;
+	input [31:0]	input2;
+	output [31:0]	out;
+
+	assign		out = input1 + input2 + carry_in;
+endmodule
