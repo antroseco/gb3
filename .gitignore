@@ -58,9 +58,3 @@ dkms.conf
 *.json
 *.i
 *.sr
-
-# Compiled programs
-softwareblink
-softwareblink-sf
-bsort
-bsort-sf
