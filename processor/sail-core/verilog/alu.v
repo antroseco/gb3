@@ -82,7 +82,8 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable);
 	assign adder_input2 = (ALUctl[3:0] == `kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SUB
 	    || ALUctl[3:0] == `kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SLT) ? ~B : B;
 
-	assign adder_carry_in = (ALUctl[3:0] == `kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SUB);
+	assign adder_carry_in = (ALUctl[3:0] == `kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SUB
+	    || ALUctl[3:0] == `kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SLT);
 
 	full_adder alu_full_adder(
 		.carry_in(adder_carry_in),
@@ -117,7 +118,7 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable);
 			/*
 			 *	SLT (the fields also matches all the other SLT variants)
 			 */
-			`kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SLT:	ALUOut = $signed(A) < $signed(B) ? 32'b1 : 32'b0;
+			`kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SLT:	ALUOut = adder_output[31] ? 32'b1 : 32'b0;
 
 			/*
 			 *	SRL (the fields also matches the other SRL variants)
