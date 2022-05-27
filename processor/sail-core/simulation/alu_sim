@@ -2,4 +2,4 @@
 
 iverilog ../verilog/alu.v ../verilog/alu_control.v ../verilog/adder.v alu_sim.v
 vvp a.out
-gtkwave adder.vcd
+#gtkwave adder.vcd
