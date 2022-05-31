@@ -43,8 +43,8 @@
 module branch_predictor(
 		clk,
 		actual_branch_decision,
-		branch_decode_sig,
-		branch_mem_sig,
+		request_prediction,
+		update_state,
 		in_addr,
 		offset,
 		branch_addr,
@@ -56,8 +56,8 @@ module branch_predictor(
 	 */
 	input		clk;
 	input		actual_branch_decision;
-	input		branch_decode_sig;
-	input		branch_mem_sig;
+	input		request_prediction;
+	input		update_state;
 	input [31:0]	in_addr;
 	input [31:0]	offset;
 
@@ -79,12 +79,17 @@ module branch_predictor(
 	 *	not worth the effort---we would still need to make a random
 	 *	prediction, so might as well use the pre-existing state.
 	 */
+	localparam	STRONGLY_NOT_TAKEN	= 2'b00;
+	localparam	WEAKLY_NOT_TAKEN	= 2'b01;
+	localparam	WEAKLY_TAKEN		= 2'b10;
+	localparam	STRONGLY_TAKEN		= 2'b11;
+
 	reg [1:0]	state[15:0];
 	reg [3:0]	last_tag;
 	wire [3:0]	tag;
 	wire [1:0]	s;
 
-	reg		branch_mem_sig_reg;
+	reg		update_state_reg;
 
 	/*
 	 *	The `initial` statement below uses Yosys's support for nonzero
@@ -101,34 +106,61 @@ module branch_predictor(
 		for (i = 0; i < 16; i = i + 1)
 			state[i] = 2'b01;
 
-		branch_mem_sig_reg = 1'b0;
+		update_state_reg = 1'b0;
 	end
 
 	always @(negedge clk) begin
-		branch_mem_sig_reg <= branch_mem_sig;
+		update_state_reg <= update_state;
+
+		/*
+		 * negedge executes after posedge, so we can't use last_tag
+		 * later when assigning to output reg prediction.
+		 */
+		if (request_prediction)
+			last_tag <= tag;
 	end
 
 	/*
 	 *	Using this microarchitecture, branches can't occur consecutively
 	 *	therefore can use branch_mem_sig as every branch is followed by
-	 *	a bubble, so a 0 to 1 transition
+	 *	a bubble, so a 0 to 1 transition.
+	 *
+	 *	branch_mem_sig should thus be assigned to update_state.
 	 */
 	always @(posedge clk) begin
-		if (branch_mem_sig_reg) begin
-			state[last_tag] <= {
-				(s[1]&s[0]) | (s[0]&actual_branch_decision) | (s[1]&actual_branch_decision),
-				(s[1]&(!s[0])) | ((!s[0])&actual_branch_decision) | (s[1]&actual_branch_decision)
-			};
-		end
+		if (update_state_reg) begin
+			case (state[last_tag])
+				STRONGLY_NOT_TAKEN: begin
+					if (actual_branch_decision == 1)
+						state[last_tag] <= WEAKLY_NOT_TAKEN;
+				end
 
-		if (branch_decode_sig)
-			last_tag <= tag;
+				WEAKLY_NOT_TAKEN: begin
+					if (actual_branch_decision == 1)
+						state[last_tag] <= WEAKLY_TAKEN;
+					else
+						state[last_tag] <= STRONGLY_NOT_TAKEN;
+				end
+
+				WEAKLY_TAKEN: begin
+					if (actual_branch_decision == 1)
+						state[last_tag] <= STRONGLY_TAKEN;
+					else
+						state[last_tag] <= WEAKLY_NOT_TAKEN;
+				end
+
+				STRONGLY_TAKEN: begin
+					if (actual_branch_decision == 0)
+						state[last_tag] <= WEAKLY_TAKEN;
+				end
+			endcase
+		end
 	end
 
 	assign tag = in_addr[5:2];
-	assign s = state[tag];
 	assign branch_addr = in_addr + offset;
-	assign prediction = s[1] & branch_decode_sig;
+	assign prediction = (state[tag] == WEAKLY_TAKEN ||
+			     state[tag] == STRONGLY_TAKEN) & request_prediction;
 
 	/*
 	 * Expose state to GTKwave.
