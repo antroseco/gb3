@@ -41,16 +41,27 @@
  *	Top level entity, linking cpu with data and instruction memory.
  */
 
+`timescale 10ns/1ns
+
 module top (led);
 	output [7:0]	led;
 
 	wire		clk_proc;
 	wire		data_clk_stall;
-	
-	wire		clk;
 	reg		ENCLKHF		= 1'b1;	// Plock enable
 	reg		CLKHF_POWERUP	= 1'b1;	// Power up the HFOSC circuit
 
+`ifdef SIMULATION_MODE
+	reg		clk		= 1'b0;
+
+	always #0.5 clk = ~clk;
+
+	initial begin
+		$dumpfile ("processor.fst");
+		$dumpvars;
+	end
+`else
+	reg		clk;
 
 	/*
 	 *	Use the iCE40's hard primitive for the clock source.
@@ -60,6 +71,7 @@ module top (led);
 		.CLKHFPU(CLKHF_POWERUP),
 		.CLKHF(clk)
 	);
+`endif
 
 	/*
 	 *	Memory interface
@@ -86,8 +98,8 @@ module top (led);
 		.data_mem_sign_mask(data_sign_mask)
 	);
 
-	instruction_memory inst_mem( 
-		.addr(inst_in), 
+	instruction_memory inst_mem(
+		.addr(inst_in),
 		.out(inst_out)
 	);
 
@@ -95,8 +107,8 @@ module top (led);
 			.clk(clk),
 			.addr(data_addr),
 			.write_data(data_WrData),
-			.memwrite(data_memwrite), 
-			.memread(data_memread), 
+			.memwrite(data_memwrite),
+			.memread(data_memread),
 			.read_data(data_out),
 			.sign_mask(data_sign_mask),
 			.led(led),

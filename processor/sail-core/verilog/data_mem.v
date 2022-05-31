@@ -241,6 +241,12 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 	always @(posedge clk) begin
 		if(memwrite == 1'b1 && addr == 32'h2000) begin
 			led_reg <= write_data;
+
+			`ifdef SIMULATION_MODE
+				$display("@%0tns Writing to LED", $realtime);
+				if (write_data == 0)
+					$finish;
+			`endif
 		end
 	end
 
