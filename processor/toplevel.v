@@ -41,8 +41,6 @@
  *	Top level entity, linking cpu with data and instruction memory.
  */
 
-`timescale 10ns/1ns
-
 module top (led);
 	output [7:0]	led;
 
@@ -54,7 +52,7 @@ module top (led);
 `ifdef SIMULATION_MODE
 	reg		clk		= 1'b0;
 
-	always #0.5 clk = ~clk;
+	always #1 clk = ~clk;
 
 	initial begin
 		$dumpfile ("processor.fst");
