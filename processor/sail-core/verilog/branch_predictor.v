@@ -89,8 +89,6 @@ module branch_predictor(
 	wire [3:0]	tag;
 	wire [1:0]	s;
 
-	reg		update_state_reg;
-
 	/*
 	 *	The `initial` statement below uses Yosys's support for nonzero
 	 *	initial values:
@@ -105,13 +103,9 @@ module branch_predictor(
 	initial begin
 		for (i = 0; i < 16; i = i + 1)
 			state[i] = 2'b01;
-
-		update_state_reg = 1'b0;
 	end
 
 	always @(negedge clk) begin
-		update_state_reg <= update_state;
-
 		/*
 		 * negedge executes after posedge, so we can't use last_tag
 		 * later when assigning to output reg prediction.
@@ -128,7 +122,7 @@ module branch_predictor(
 	 *	branch_mem_sig should thus be assigned to update_state.
 	 */
 	always @(posedge clk) begin
-		if (update_state_reg) begin
+		if (update_state) begin
 			case (state[last_tag])
 				STRONGLY_NOT_TAKEN: begin
 					if (actual_branch_decision == 1)
