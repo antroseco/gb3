@@ -130,6 +130,11 @@ module branch_predictor(
 	assign branch_addr = in_addr + offset;
 	assign prediction = s[1] & branch_decode_sig;
 
+	/*
+	 * Expose state to GTKwave.
+	 * Unfortunately there isn't a better way to do this.
+	 */
+`ifdef SIMULATION_MODE
 	wire [1:0] s0;
 	wire [1:0] s1;
 	wire [1:0] s2;
@@ -163,4 +168,5 @@ module branch_predictor(
 	assign s13 = state[13];
 	assign s14 = state[14];
 	assign s15 = state[15];
+`endif
 endmodule
