@@ -243,7 +243,9 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 			led_reg <= write_data;
 
 			`ifdef SIMULATION_MODE
-				$display("@%0tns Writing to LED", $realtime);
+				/* Clock period is #2. */
+				$display("@%0t cycles Writing to LED",
+					$realtime / 2);
 				if (write_data == 0)
 					$finish;
 			`endif
