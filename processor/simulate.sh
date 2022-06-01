@@ -7,5 +7,5 @@ iverilog -s top -D SIMULATION_MODE=1 -W all $VERILOG_FILES ../../toplevel.v
 vvp a.out -fst
 
 if ! pgrep gtkwave >/dev/null; then
-	gtkwave processor.fst
+	gtkwave processor.fst &
 fi
