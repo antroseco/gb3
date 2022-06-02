@@ -101,7 +101,7 @@ module branch_predictor(
 	integer i;
 	initial begin
 		for (i = 0; i < 16; i = i + 1) begin
-			state[i] = 2'b01;
+			state[i] = 2'b10;
 			/* Need to explicitly dump arrays. */
 			$dumpvars(0, state[i]);
 		end
