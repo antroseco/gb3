@@ -55,7 +55,6 @@ module top (led);
 	always #1 clk = ~clk;
 
 	initial begin
-		$dumpfile ("processor.fst");
 		$dumpvars;
 	end
 `else
