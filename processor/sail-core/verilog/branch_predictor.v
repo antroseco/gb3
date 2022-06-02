@@ -87,7 +87,6 @@ module branch_predictor(
 	reg [1:0]	state[15:0];
 	reg [3:0]	last_tag;
 	wire [3:0]	tag;
-	wire [1:0]	s;
 
 	/*
 	 *	The `initial` statement below uses Yosys's support for nonzero
