@@ -100,8 +100,11 @@ module branch_predictor(
 	 */
 	integer i;
 	initial begin
-		for (i = 0; i < 16; i = i + 1)
+		for (i = 0; i < 16; i = i + 1) begin
 			state[i] = 2'b01;
+			/* Need to explicitly dump arrays. */
+			$dumpvars(0, state[i]);
+		end
 	end
 
 	always @(negedge clk) begin
@@ -154,44 +157,4 @@ module branch_predictor(
 	assign branch_addr = in_addr + offset;
 	assign prediction = (state[tag] == WEAKLY_TAKEN ||
 			     state[tag] == STRONGLY_TAKEN) & request_prediction;
-
-	/*
-	 * Expose state to GTKwave.
-	 * Unfortunately there isn't a better way to do this.
-	 */
-`ifdef SIMULATION_MODE
-	wire [1:0] s0;
-	wire [1:0] s1;
-	wire [1:0] s2;
-	wire [1:0] s3;
-	wire [1:0] s4;
-	wire [1:0] s5;
-	wire [1:0] s6;
-	wire [1:0] s7;
-	wire [1:0] s8;
-	wire [1:0] s9;
-	wire [1:0] s10;
-	wire [1:0] s11;
-	wire [1:0] s12;
-	wire [1:0] s13;
-	wire [1:0] s14;
-	wire [1:0] s15;
-
-	assign s0 = state[0];
-	assign s1 = state[1];
-	assign s2 = state[2];
-	assign s3 = state[3];
-	assign s4 = state[4];
-	assign s5 = state[5];
-	assign s6 = state[6];
-	assign s7 = state[7];
-	assign s8 = state[8];
-	assign s9 = state[9];
-	assign s10 = state[10];
-	assign s11 = state[11];
-	assign s12 = state[12];
-	assign s13 = state[13];
-	assign s14 = state[14];
-	assign s15 = state[15];
-`endif
 endmodule
