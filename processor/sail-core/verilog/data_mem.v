@@ -34,26 +34,17 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-
-//Data cache
-
-module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data, led, clk_stall);
-	input			clk;
-	input [31:0]		addr;
-	input [31:0]		write_data;
-	input			memwrite;
-	input			memread;
-	input [3:0]		sign_mask;
-	output reg [31:0]	read_data;
-	output [7:0]		led;
-	output reg		clk_stall;	/* Sets the clock high. */
-
-	/*
-	 *	led register
-	 */
-	reg [31:0]		led_reg;
-
+module data_mem(
+	input			clk,
+	input [31:0]		addr,
+	input [31:0]		write_data,
+	input			memwrite,
+	input			memread,
+	input [3:0]		sign_mask,
+	output reg [31:0]	read_data,
+	output reg [7:0]	led,
+	output reg		clk_stall	/* Sets the clock high. */
+);
 	/*
 	 *	Current state
 	 */
@@ -153,8 +144,8 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 	 *	LED register interfacing with I/O
 	 */
 	always @(posedge clk) begin
-		if(memwrite == 1'b1 && addr == 32'h2000) begin
-			led_reg <= write_data;
+		if (memwrite == 1'b1 && addr == 32'h2000) begin
+			led <= write_data[7:0];
 
 			`ifdef SIMULATION_MODE
 				/* Clock period is #2. */
@@ -181,7 +172,7 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 				addr_buf <= addr;
 				sign_mask_buf <= sign_mask;
 
-				if(memwrite==1'b1 || memread==1'b1) begin
+				if (memwrite==1'b1 || memread==1'b1) begin
 					state <= READ_BUFFER;
 					clk_stall <= 1;
 				end
@@ -189,16 +180,16 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 
 			READ_BUFFER: begin
 				word_buf <= data_block[addr_buf_block_addr];
-				if(memread_buf==1'b1) begin
+
+				if (memread_buf==1'b1)
 					state <= READ;
-				end
-				else if(memwrite_buf == 1'b1) begin
+				else if (memwrite_buf == 1'b1)
 					state <= WRITE;
-				end
 			end
 
 			READ: begin
 				clk_stall <= 0;
+
 				read_data <= read_buf;
 				state <= IDLE;
 			end
@@ -209,12 +200,6 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 				data_block[addr_buf_block_addr] <= replacement_word;
 				state <= IDLE;
 			end
-
 		endcase
 	end
-
-	/*
-	 *	Test led
-	 */
-	assign led = led_reg[7:0];
 endmodule
