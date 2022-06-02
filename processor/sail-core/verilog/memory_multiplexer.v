@@ -63,24 +63,21 @@ module  memory_multiplexer(
 	 * 3'b011;			// halfword
 	 * 3'b111;			// word
 	 * default: mask = 3'b000;	// should not happen for loads/stores
-	 *
-	 * TODO: see if we can simplify write_selectX, since they are mutually
-	 * exclusive.
 	 */
-	wire write_select0;
-	wire write_select1;
+	wire write_select_byte;
+	wire write_select_word;
 
-	wire[31:0] write_out1;
-	wire[31:0] write_out2;
+	assign write_select_byte = ~sign_mask_buf[1];
+	assign write_select_word = sign_mask_buf[2];
 
-	assign write_select0 = ~sign_mask_buf[2] & sign_mask_buf[1];
-	assign write_select1 = sign_mask_buf[2];
+	wire [31:0] write_out_partial;
 
-	// TODO: Can we remove write_out2?
-	assign write_out1 = write_select0 ? {halfword_r1, halfword_r0} : {byte_r3, byte_r2, byte_r1, byte_r0};
-	assign write_out2 = write_select0 ? 32'b0 : write_data_buffer;
+	assign write_out_partial = write_select_byte ?
+		{byte_r3, byte_r2, byte_r1, byte_r0} :
+		{halfword_r1, halfword_r0};
 
-	assign replacement_word = write_select1 ? write_out2 : write_out1;
+	assign replacement_word = write_select_word ?
+		write_data_buffer : write_out_partial;
 
 	/*
 	 *	Combinational logic for generating 32-bit read data
