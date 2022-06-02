@@ -246,8 +246,10 @@ module data_mem (clk, addr, write_data, memwrite, memread, sign_mask, read_data,
 				/* Clock period is #2. */
 				$display("@%0t cycles Writing to LED",
 					$realtime / 2);
-				if (write_data == 0)
+				if (write_data == 0) begin
+					$writememh("memory_dump.hex", data_block);
 					$finish;
+				end
 			`endif
 		end
 	end
