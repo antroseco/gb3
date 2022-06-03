@@ -79,11 +79,12 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable);
 	wire[31:0]  adder_input2;
 	wire[31:0]  adder_output;
 
-	assign adder_input2 = (ALUctl[3:0] == `kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SUB
-	    || ALUctl[3:0] == `kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SLT) ? ~B : B;
-
+	// Note, this equality is already performed in the case statement, so
+	// it's not more optimal to use ALUctl[3:1]
 	assign adder_carry_in = (ALUctl[3:0] == `kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SUB
 	    || ALUctl[3:0] == `kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SLT);
+
+	assign adder_input2 = adder_carry_in ? ~B : B;
 
 	full_adder alu_full_adder(
 		.carry_in(adder_carry_in),
