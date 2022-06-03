@@ -42,23 +42,19 @@ module data_mem(
 	input			memread,
 	input [3:0]		sign_mask,
 	output reg [31:0]	read_data,
-	output reg [7:0]	led,
-	output reg		clk_stall	/* Sets the clock high. */
+	output reg [7:0]	led
 );
 	/*
 	 *	Current state
 	 */
-	reg			state = 0;
+	reg			access_memory = 1'b0;
 	reg			operation_buf;
 
 	/*
-	 *	Possible states
+	 *	Possible memory operations
 	 */
-	parameter		IDLE	= 0;
-	parameter		OPERATE = 1;
-
-	parameter		READ	= 0;
-	parameter		WRITE	= 1;
+	parameter		READ	= 1'b0;
+	parameter		WRITE	= 1'b1;
 
 
 	/*
@@ -70,12 +66,6 @@ module data_mem(
 	 *	Read buffer
 	 */
 	wire [31:0]		read_buf;
-
-	/*
-	 *	Buffer to identify read or write operation
-	 */
-	reg			memread_buf;
-	reg			memwrite_buf;
 
 	/*
 	 *	Buffers to store write data
@@ -142,13 +132,13 @@ module data_mem(
 	 */
 	initial begin
 		$readmemh("verilog/data.hex", data_block);
-		clk_stall = 0;
 	end
 
 	/*
 	 *	LED register interfacing with I/O
 	 */
 	always @(posedge clk) begin
+		/* FIXME: writing to the LED also write to address 0. */
 		if (memwrite == 1'b1 && addr == 32'h2000) begin
 			led <= write_data[7:0];
 
@@ -156,6 +146,7 @@ module data_mem(
 				/* Clock period is #2. */
 				$display("@%0t cycles Writing to LED",
 					$realtime / 2);
+
 				if (write_data == 0) begin
 					$writememh("memory_dump.hex", data_block);
 					$finish;
@@ -165,41 +156,38 @@ module data_mem(
 	end
 
 	/*
-	 *	State machine
+	 *	Setup next memory operation (need to wait a cycle for the
+	 *	combinational memory_multiplexer's output to update).
 	 */
 	always @(posedge clk) begin
-		case (state)
-			IDLE: begin
-				clk_stall <= 0;
-				memread_buf <= memread;
-				memwrite_buf <= memwrite;
-				write_data_buffer <= write_data;
-				addr_buf <= addr;
-				sign_mask_buf <= sign_mask;
+		write_data_buffer <= write_data;
+		addr_buf <= addr;
+		sign_mask_buf <= sign_mask;
 
-				word_buf <= data_block[addr_block_addr];
+		word_buf <= data_block[addr_block_addr];
 
-				if (memread == 1'b1) begin
-					clk_stall <= 1;
-					state <= OPERATE;
-					operation_buf <= READ;
-				end
-				else if (memwrite == 1'b1) begin
-					clk_stall <= 1;
-					state <= OPERATE;
-					operation_buf <= WRITE;
-				end
-			end
+		if (memread == 1'b1) begin
+			access_memory <= 1'b1;
+			operation_buf <= READ;
+		end
+		else if (memwrite == 1'b1) begin
+			access_memory <= 1'b1;
+			operation_buf <= WRITE;
+		end
+		else begin
+			access_memory <= 1'b0;
+		end
+	end
 
-			OPERATE: begin
-				if (operation_buf == READ)
-					read_data <= read_buf;
-				else /* if (operation_buf == WRITE) */
-					data_block[addr_buf_block_addr] <= replacement_word;
-
-				clk_stall <= 0;
-				state <= IDLE;
-			end
-		endcase
+	/*
+	 *	Perform scheduled memory operation.
+	 */
+	always @(negedge clk) begin
+		if (access_memory == 1'b1) begin
+			if (operation_buf == READ)
+				read_data <= read_buf;
+			else /* if (operation_buf == WRITE) */
+				data_block[addr_buf_block_addr] <= replacement_word;
+		end
 	end
 endmodule
