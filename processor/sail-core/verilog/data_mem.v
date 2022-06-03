@@ -54,7 +54,6 @@ module data_mem(
 	 *	Possible states
 	 */
 	parameter		IDLE = 0;
-	parameter		READ_BUFFER = 1;
 	parameter		READ = 2;
 	parameter		WRITE = 3;
 
@@ -99,6 +98,7 @@ module data_mem(
 	/*
 	 *	Wire assignments
 	 */
+	wire [9:0]		addr_block_addr;
 	wire [9:0]		addr_buf_block_addr;
 	wire [1:0]		addr_buf_byte_offset;
 
@@ -114,6 +114,7 @@ module data_mem(
 	 * at the same memory cell. This also implies that it's impossible to
 	 * read/write to/from the instruction memory.
 	 */
+	assign			addr_block_addr		= addr[11:2];
 	assign			addr_buf_block_addr	= addr_buf[11:2];
 	assign			addr_buf_byte_offset	= addr_buf[1:0];
 
@@ -172,19 +173,16 @@ module data_mem(
 				addr_buf <= addr;
 				sign_mask_buf <= sign_mask;
 
-				if (memwrite==1'b1 || memread==1'b1) begin
-					state <= READ_BUFFER;
+				word_buf <= data_block[addr_block_addr];
+
+				if (memread == 1'b1) begin
 					clk_stall <= 1;
-				end
-			end
-
-			READ_BUFFER: begin
-				word_buf <= data_block[addr_buf_block_addr];
-
-				if (memread_buf==1'b1)
 					state <= READ;
-				else if (memwrite_buf == 1'b1)
+				end
+				else if (memwrite == 1'b1) begin
+					clk_stall <= 1;
 					state <= WRITE;
+				end
 			end
 
 			READ: begin
