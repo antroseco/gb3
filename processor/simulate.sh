@@ -1,5 +1,6 @@
-#!/bin/sh
+#!/bin/sh -e
 cd sail-core/verilog
+rm memory_dump.hex || true
 
 VERILOG_FILES=`ls -l *.v | awk '{ print "-l "$9 }'`
 
@@ -10,3 +11,5 @@ rm a.out
 if ! pgrep gtkwave >/dev/null; then
 	gtkwave dump.fst &
 fi
+
+sha1sum *.hex
