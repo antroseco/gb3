@@ -87,7 +87,7 @@ module top (led);
 	wire[31:0]	data_WrData;
 	wire		data_memwrite;
 	wire		data_memread;
-	wire[3:0]	data_sign_mask;
+	wire[2:0]	data_sign_mask;
 
 
 	cpu processor(
