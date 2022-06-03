@@ -48,14 +48,18 @@ module data_mem(
 	/*
 	 *	Current state
 	 */
-	integer			state = 0;
+	reg			state = 0;
+	reg			operation_buf;
 
 	/*
 	 *	Possible states
 	 */
-	parameter		IDLE = 0;
-	parameter		READ = 2;
-	parameter		WRITE = 3;
+	parameter		IDLE	= 0;
+	parameter		OPERATE	= 1;
+
+	parameter		READ	= 0;
+	parameter		WRITE	= 1;
+
 
 	/*
 	 *	Line buffer
@@ -66,12 +70,6 @@ module data_mem(
 	 *	Read buffer
 	 */
 	wire [31:0]		read_buf;
-
-	/*
-	 *	Buffer to identify read or write operation
-	 */
-	reg			memread_buf;
-	reg			memwrite_buf;
 
 	/*
 	 *	Buffers to store write data
@@ -167,8 +165,6 @@ module data_mem(
 		case (state)
 			IDLE: begin
 				clk_stall <= 0;
-				memread_buf <= memread;
-				memwrite_buf <= memwrite;
 				write_data_buffer <= write_data;
 				addr_buf <= addr;
 				sign_mask_buf <= sign_mask;
@@ -177,25 +173,23 @@ module data_mem(
 
 				if (memread == 1'b1) begin
 					clk_stall <= 1;
-					state <= READ;
+					state <= OPERATE;
+					operation_buf <= READ;
 				end
 				else if (memwrite == 1'b1) begin
 					clk_stall <= 1;
-					state <= WRITE;
+					state <= OPERATE;
+					operation_buf <= WRITE;
 				end
 			end
 
-			READ: begin
+			OPERATE: begin
+				if (operation_buf == READ)
+					read_data <= read_buf;
+				else /* if (operation_buf == WRITE) */
+					data_block[addr_buf_block_addr] <= replacement_word;
+
 				clk_stall <= 0;
-
-				read_data <= read_buf;
-				state <= IDLE;
-			end
-
-			WRITE: begin
-				clk_stall <= 0;
-
-				data_block[addr_buf_block_addr] <= replacement_word;
 				state <= IDLE;
 			end
 		endcase
