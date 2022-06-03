@@ -1,52 +1,45 @@
 #include "sf-types.h"
-/*#include "sh7708.h"*/
-/*#include "devscc.h"*/
-/*#include "print.h"*/
 #include "bsort-input.h"
 
-volatile unsigned int *		gDebugLedsMemoryMappedRegister = (unsigned int *)0x2000;
+volatile unsigned int *gDebugLedsMemoryMappedRegister = (unsigned int *)0x2000;
 
-int
-main(void)
+int main()
 {
-	int i;
 	int maxindex = bsort_input_len - 1;
 
-	/**gDebugLedsMemoryMappedRegister = 0x00;*/
+	/* Start with LED on. */
+	*gDebugLedsMemoryMappedRegister = 0xFF;
 
-	*gDebugLedsMemoryMappedRegister = 0xFF; //start with LED on
-
-
-	/*print("\n\n[%s]\n", bsort_input);*/
+	/* Sort. */
 	while (maxindex > 0)
 	{
-		for (i = 0; i < maxindex; i++)
+		for (int i = 0; i < maxindex; i++)
 		{
-			if (bsort_input[i] > bsort_input[i+1])
+			if (bsort_input[i] > bsort_input[i + 1])
 			{
-				/*		swap		*/
-				bsort_input[i] ^= bsort_input[i+1];
-				bsort_input[i+1] ^= bsort_input[i];
-				bsort_input[i] ^= bsort_input[i+1];
+				/* Swap. */
+				bsort_input[i] ^= bsort_input[i + 1];
+				bsort_input[i + 1] ^= bsort_input[i];
+				bsort_input[i] ^= bsort_input[i + 1];
 			}
 		}
 
 		maxindex--;
 	}
-	int check = 1;
-	for (int i=0; i<bsort_input_len; i++){
-		if (bsort_input[i] != correct_arr[i]){
-			check = 0;
-		}
-	}
 
-	if (check)
+	/* Verify results. */
+	int delta = 0;
+	for (int i = 0; i < bsort_input_len; i++)
+		delta |= bsort_input[i] ^ correct_arr[i];
+
+	/* Turn off LED if the array is now sorted. */
+	if (!delta)
+		*gDebugLedsMemoryMappedRegister = 0x00;
+
+	for (int i = 0; i < 400000; i++)
 	{
-		*gDebugLedsMemoryMappedRegister = 0x00; //LED turns off
-		// for (int j = 0; j < 4000; j++); //delay for an interval
+		/* Spin! */
 	}
-
-	for (int i = 0; i < 200000; i++) {}
 
 	return 0;
 }
