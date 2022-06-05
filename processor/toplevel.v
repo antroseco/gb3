@@ -58,7 +58,9 @@ module top (led);
 		$dumpvars;
 	end
 `else
-	reg		clk;
+	reg		clk		= 1'b0;
+	wire		clk_12;
+	wire		clk_255;
 
 	/*
 	 *	Use the iCE40's hard primitive for the clock source.
@@ -66,8 +68,16 @@ module top (led);
 	SB_HFOSC #(.CLKHF_DIV("0b10")) OSCInst0 (
 		.CLKHFEN(ENCLKHF),
 		.CLKHFPU(CLKHF_POWERUP),
-		.CLKHF(clk)
+		.CLKHF(clk_12)
 	);
+
+	pll pll_inst(
+		.clock_in(clk_12),
+		.clock_out(clk_255),
+	);
+
+	always @(posedge clk_255)
+		clk <= ~clk;
 `endif
 
 	/*
