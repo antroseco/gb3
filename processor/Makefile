@@ -24,8 +24,8 @@ remote:
 	((git log --oneline -1 | grep -q "Make") && git reset HEAD~) || true
 	git checkout -
 	git branch -D remote-push
-	ssh gb3 sh make.sh > compilation_output 2>&1
-	./process_yosys.sh compilation_output
+	ssh gb3 sh make.sh > compilation_output.txt 2>&1
+	./process_yosys.sh compilation_output.txt
 	scp gb3:gb3/processor/sail.bin .
 
 clean:
