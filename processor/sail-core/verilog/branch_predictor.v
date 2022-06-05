@@ -107,11 +107,7 @@ module branch_predictor(
 		end
 	end
 
-	always @(negedge clk) begin
-		/*
-		 * negedge executes after posedge, so we can't use last_tag
-		 * later when assigning to output reg prediction.
-		 */
+	always @(posedge clk) begin
 		if (request_prediction)
 			last_tag <= tag;
 	end
