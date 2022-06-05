@@ -44,39 +44,36 @@
 module top (led);
 	output [7:0]	led;
 
+	reg		clk		= 1'b0;
 	wire		clk_proc;
 	wire		data_clk_stall;
-	reg		ENCLKHF		= 1'b1;	// Plock enable
-	reg		CLKHF_POWERUP	= 1'b1;	// Power up the HFOSC circuit
 
 `ifdef SIMULATION_MODE
-	reg		clk		= 1'b0;
-
 	always #1 clk = ~clk;
 
-	initial begin
-		$dumpvars;
-	end
+	initial $dumpvars;
 `else
-	reg		clk		= 1'b0;
 	wire		clk_12;
-	wire		clk_255;
+	wire		clk_pll;
 
 	/*
-	 *	Use the iCE40's hard primitive for the clock source.
+	 *	Use the iCE40's hard primitive to generate a 12 MHz clock source
+	 *	and pass that to the PLL. Since the PLL has a minimum output
+	 *	frequency of 16 MHz, it is set to generate twice the frequency
+	 *	desired, and its output is divided by 2 to derive clk.
 	 */
 	SB_HFOSC #(.CLKHF_DIV("0b10")) OSCInst0 (
-		.CLKHFEN(ENCLKHF),
-		.CLKHFPU(CLKHF_POWERUP),
+		.CLKHFEN(1'b1), /* Enable oscillator output. */
+		.CLKHFPU(1'b1), /* Power up the oscillator. */
 		.CLKHF(clk_12)
 	);
 
 	pll pll_inst(
 		.clock_in(clk_12),
-		.clock_out(clk_255),
+		.clock_out(clk_pll),
 	);
 
-	always @(posedge clk_255)
+	always @(posedge clk_pll)
 		clk <= ~clk;
 `endif
 
@@ -122,5 +119,5 @@ module top (led);
 			.clk_stall(data_clk_stall)
 		);
 
-	assign clk_proc = (data_clk_stall) ? 1'b1 : clk;
+	assign clk_proc = data_clk_stall ? 1'b1 : clk;
 endmodule
