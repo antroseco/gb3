@@ -70,12 +70,20 @@ module top (led);
 		.CLKHFPU(CLKHF_POWERUP),
 		.CLKHF(clk_raw)
 	);
-	initial begin
-		clk = 1'b1;
-	end
-	always @(posedge clk_raw) begin //divide clk freq by 2
-		clk = ~clk;
-	end
+
+	SB_PLL40_CORE #(
+      .FEEDBACK_PATH("SIMPLE"),
+      .PLLOUT_SELECT("GENCLK"),
+      .DIVR(4'b0000),
+      .DIVF(7'b0001111),
+      .DIVQ(3'b101),
+      .FILTER_RANGE(3'b100),
+    ) SB_PLL40_CORE_inst (
+      .RESETB(1'b1),
+      .BYPASS(1'b0),
+      .PLLOUTCORE(clk),
+      .REFERENCECLK(clk_raw)
+   ); //F_pllout = F_ref x (DIVF + 1) / ((2^DIVQ) x (DIVR + 1))
 
 `endif
 
