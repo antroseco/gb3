@@ -28,6 +28,19 @@ remote:
 	./process_yosys.sh compilation_output.txt
 	scp gb3:gb3/processor/sail.bin .
 
+remote-scripted:
+	git checkout -b remote-push >/dev/null 2>&1
+	git add .
+	git restore --staged Makefile
+	git commit -m "Make" >/dev/null 2>&1 || true
+	git push -f gb3:gb3 >/dev/null 2>&1
+	((git log --oneline -1 | grep -q "Make") && git reset HEAD~ >/dev/null 2>&1) || true
+	git checkout - >/dev/null 2>&1
+	git branch -D remote-push >/dev/null 2>&1
+	ssh gb3 sh make.sh > compilation_output.txt 2>&1
+	./process_yosys.sh compilation_output.txt
+	scp gb3:gb3/processor/sail.bin . >/dev/null 2>&1
+
 clean:
 	rm -f *.json *.blif *.asc *.bin
 
