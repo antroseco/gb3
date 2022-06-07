@@ -41,7 +41,7 @@ module data_mem(
 	input			memwrite,
 	input			memread,
 	input [3:0]		sign_mask,
-	output reg [31:0]	read_data,
+	output [31:0]		read_data,
 	output reg [7:0]	led,
 	output reg		clk_stall	/* Sets the clock high. */
 );
@@ -116,6 +116,16 @@ module data_mem(
 	assign			addr_buf_block_addr	= addr_buf[11:2];
 	assign			addr_buf_byte_offset	= addr_buf[1:0];
 
+	/* Multiplexers. */
+	reg			whole_word_read;
+
+	mux2to1 read_mux(
+		.input0(read_buf), /* Use combinatorial network output. */
+		.input1(word_buf), /* Use memory output directly. */
+		.select(whole_word_read),
+		.out(read_data)
+	);
+
 	memory_multiplexer mem_mux(
 		.addr_lsb(addr_buf_byte_offset),
 		.word_buf(word_buf),
@@ -172,24 +182,28 @@ module data_mem(
 				word_buf <= data_block[addr_block_addr];
 
 				if (memread == 1'b1) begin
-					clk_stall <= 1;
-					state <= OPERATE;
-					operation_buf <= READ;
+					if (sign_mask[2:0] == 3'b111) begin
+						whole_word_read <= 1'b1;
+					end
+					else begin
+						whole_word_read <= 1'b0;
+						clk_stall <= 1'b1;
+						state <= OPERATE;
+						operation_buf <= READ;
+					end
 				end
 				else if (memwrite == 1'b1) begin
-					clk_stall <= 1;
+					clk_stall <= 1'b1;
 					state <= OPERATE;
 					operation_buf <= WRITE;
 				end
 			end
 
 			OPERATE: begin
-				if (operation_buf == READ)
-					read_data <= read_buf;
-				else /* if (operation_buf == WRITE) */
+				if (operation_buf == WRITE)
 					data_block[addr_buf_block_addr] <= replacement_word;
 
-				clk_stall <= 0;
+				clk_stall <= 1'b0;
 				state <= IDLE;
 			end
 		endcase
